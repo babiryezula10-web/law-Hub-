@@ -11,8 +11,8 @@
     },
     {
       "id": "usr_lecturer_1",
-      "name": "Dr. Apollo Kaggwa",
-      "email": "apollo.kaggwa@lawhub.ug",
+      "name": "Dr. Apollo Mukasa",
+      "email": "apollo.mukasa@lawhub.ug",
       "role": "Lecturer",
       "institution": "Makerere University / Gulu University",
       "joinedDate": "November 2024",
@@ -46,7 +46,7 @@
       "status": "ACTIVE"
     },
     {
-      "id": "usr_student_1",
+      "id": "usr_6_pbxsj",
       "name": "Student Scholar",
       "email": "student@lawhub.ug",
       "role": "Student",
@@ -64,7 +64,7 @@
       "status": "ACTIVE"
     },
     {
-      "id": "usr_student_2",
+      "id": "usr_8_839jf",
       "name": "Ronald Okello",
       "email": "ronald.okello@lawhub.ug",
       "role": "Student",
@@ -106,8 +106,8 @@
       "title": "Constitutional Law I: Separation of Powers & Supremacy of 1995 Constitution (Articles 1, 2, 79, 98, 126)",
       "courseOrUnit": "Constitutional Law I",
       "description": "Detailed lecture notes covering the doctrine of constitutional supremacy, judicial review powers under Article 137, and case analysis of Paul Ssemogerere v AG and Tinyefuza v AG.",
-      "lecturerName": "Dr. Apollo Kaggwa",
-      "lecturerEmail": "apollo.kaggwa@lawhub.ug",
+      "lecturerName": "Dr. Apollo Mukasa",
+      "lecturerEmail": "apollo.mukasa@lawhub.ug",
       "institution": "Makerere University / Gulu University",
       "academicYear": "2024/2025",
       "documentType": "Lecture Notes",
@@ -155,8 +155,8 @@
       "title": "Criminal Procedure: High Court Trial Handbook and Charge Sheet Drafting Guide",
       "courseOrUnit": "Criminal Procedure",
       "description": "Procedural manual for framing indictments, summary of evidence, plea bargaining rules, and trial rights under Article 28 of the 1995 Constitution.",
-      "lecturerName": "Dr. Apollo Kaggwa",
-      "lecturerEmail": "apollo.kaggwa@lawhub.ug",
+      "lecturerName": "Dr. Apollo Mukasa",
+      "lecturerEmail": "apollo.mukasa@lawhub.ug",
       "institution": "Faculty of Law",
       "academicYear": "2024/2025",
       "documentType": "Lecture Notes",
@@ -208,8 +208,8 @@
       "studentName": "Babirye Zula",
       "studentEmail": "babiryezula10@gmail.com",
       "institution": "Gulu University Faculty of Law",
-      "lecturerName": "Dr. Apollo Kaggwa",
-      "lecturerEmail": "apollo.kaggwa@lawhub.ug",
+      "lecturerName": "Dr. Apollo Mukasa",
+      "lecturerEmail": "apollo.mukasa@lawhub.ug",
       "fileName": "Babirye_Zula_Constitutional_Law_Essay.pdf",
       "fileSize": "348 KB",
       "fileType": "application/pdf",
@@ -219,7 +219,7 @@
       "lecturerFeedback": "Excellent analysis of Article 137(1) vs 137(3) jurisdiction. The IRAC formulation of the ratio decidendi in Ssemogerere v AG is thoroughly argued and well supported.",
       "submittedAt": "2026-08-11T20:33:05.556Z",
       "reviewedAt": "2026-08-13T20:33:05.556Z",
-      "reviewedBy": "Dr. Apollo Kaggwa"
+      "reviewedBy": "Dr. Apollo Mukasa"
     },
     {
       "id": "stud_sub_02",
@@ -250,8 +250,8 @@
       "studentName": "Ronald Okello",
       "studentEmail": "ronald.okello@gulu.ac.ug",
       "institution": "Gulu University LLB Year 2",
-      "lecturerName": "Dr. Apollo Kaggwa",
-      "lecturerEmail": "apollo.kaggwa@lawhub.ug",
+      "lecturerName": "Dr. Apollo Mukasa",
+      "lecturerEmail": "apollo.mukasa@lawhub.ug",
       "fileName": "Criminal_Procedure_Indictment_Draft.docx",
       "fileSize": "410 KB",
       "fileType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
@@ -397,5 +397,5 @@
       "citation": "Const. 1995 (Consolidated 2023 Edition)"
     }
   ],
-  "lastSaved": "2026-08-14T21:00:53.131Z"
+  "lastSaved": "2026-09-09T20:39:00.549Z"
 }
