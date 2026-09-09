@@ -1,0 +1,8 @@
+{
+  "name": "LAWHUB - Uganda's AI Legal Learning Platform",
+  "description": "Uganda's comprehensive legal learning, research, and resource platform featuring the 1995 Constitution, Acts of Parliament, Landmark Cases, Black's Law Dictionary, Red Volumes, Academic Assistant, and Legal Drafting.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

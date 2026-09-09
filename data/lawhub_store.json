@@ -1,0 +1,401 @@
+{
+  "systemUsers": [
+    {
+      "id": "usr_student_1",
+      "name": "Babirye Zula",
+      "email": "babiryezula10@gmail.com",
+      "role": "Student",
+      "institution": "Gulu University Faculty of Law",
+      "joinedDate": "January 2025",
+      "status": "ACTIVE"
+    },
+    {
+      "id": "usr_lecturer_1",
+      "name": "Dr. Apollo Kaggwa",
+      "email": "apollo.kaggwa@lawhub.ug",
+      "role": "Lecturer",
+      "institution": "Makerere University / Gulu University",
+      "joinedDate": "November 2024",
+      "status": "ACTIVE"
+    },
+    {
+      "id": "usr_lecturer_2",
+      "name": "Dr. Sarah Namubiru",
+      "email": "sarah.namubiru@lawhub.ug",
+      "role": "Lecturer",
+      "institution": "Uganda Christian University (UCU) Law Faculty",
+      "joinedDate": "December 2024",
+      "status": "ACTIVE"
+    },
+    {
+      "id": "usr_admin_1",
+      "name": "Chief Legal Administrator",
+      "email": "admin@lawhub.ug",
+      "role": "Administrator",
+      "institution": "LawHub Editorial Board / Judiciary Repository",
+      "joinedDate": "October 2024",
+      "status": "ACTIVE"
+    },
+    {
+      "id": "usr_student_2",
+      "name": "Ronald Okello",
+      "email": "ronald.okello@gulu.ac.ug",
+      "role": "Student",
+      "institution": "Gulu University LLB Year 2",
+      "joinedDate": "February 2025",
+      "status": "ACTIVE"
+    },
+    {
+      "id": "usr_student_1",
+      "name": "Student Scholar",
+      "email": "student@lawhub.ug",
+      "role": "Student",
+      "institution": "Faculty of Law",
+      "joinedDate": "January 2025",
+      "status": "ACTIVE"
+    },
+    {
+      "id": "usr_lecturer_generic",
+      "name": "Dr. Apollo Kaggwa (Faculty)",
+      "email": "lecturer@lawhub.ug",
+      "role": "Lecturer",
+      "institution": "Faculty of Law",
+      "joinedDate": "November 2024",
+      "status": "ACTIVE"
+    },
+    {
+      "id": "usr_student_2",
+      "name": "Ronald Okello",
+      "email": "ronald.okello@lawhub.ug",
+      "role": "Student",
+      "institution": "LLB Year 2",
+      "joinedDate": "February 2025",
+      "status": "ACTIVE"
+    },
+    {
+      "id": "usr_1786741249210_42no",
+      "name": "New Law Student",
+      "email": "new_student@lawhub.ug",
+      "role": "Student",
+      "institution": "Faculty of Law",
+      "joinedDate": "August 2026",
+      "status": "ACTIVE"
+    },
+    {
+      "id": "usr_1786741253110_xxom",
+      "name": "Prof. Test Verified",
+      "email": "prof_verified@lawhub.ug",
+      "role": "Lecturer",
+      "institution": "Faculty of Law",
+      "joinedDate": "August 2026",
+      "status": "ACTIVE"
+    },
+    {
+      "id": "usr_1786741253130_042a",
+      "name": "System Admin Verified",
+      "email": "sys_admin_verified@lawhub.ug",
+      "role": "Administrator",
+      "institution": "Faculty of Law",
+      "joinedDate": "August 2026",
+      "status": "ACTIVE"
+    }
+  ],
+  "lecturerSubmissions": [
+    {
+      "id": "sub_const_01",
+      "title": "Constitutional Law I: Separation of Powers & Supremacy of 1995 Constitution (Articles 1, 2, 79, 98, 126)",
+      "courseOrUnit": "Constitutional Law I",
+      "description": "Detailed lecture notes covering the doctrine of constitutional supremacy, judicial review powers under Article 137, and case analysis of Paul Ssemogerere v AG and Tinyefuza v AG.",
+      "lecturerName": "Dr. Apollo Kaggwa",
+      "lecturerEmail": "apollo.kaggwa@lawhub.ug",
+      "institution": "Makerere University / Gulu University",
+      "academicYear": "2024/2025",
+      "documentType": "Lecture Notes",
+      "fileUrl": "/sample-files/const_law_lecture_notes_kaggwa.pdf",
+      "fileName": "Const_Law_Separation_of_Powers_Notes.pdf",
+      "fileSize": "482 KB",
+      "fileType": "application/pdf",
+      "fileContent": "FACULTY OF LAW\nCONSTITUTIONAL LAW I (LLB 1101)\nLECTURE NOTES ON CONSTITUTIONAL SUPREMACY & SEPARATION OF POWERS\n\n1. Foundational Doctrine:\nUnder Article 1(1) of the 1995 Constitution of the Republic of Uganda, all power belongs to the people. In Article 2, the Constitution is established as the supreme law of Uganda.\n\n2. Key Authorities:\n- Paul K. Ssemogerere & Zachary Olum v Attorney General [2000] UGSC 1\n- Major General David Tinyefuza v Attorney General [1997] UGCC 3\n- Charles Onyango Obbo & Andrew Mwenda v AG [2004] UGSC 1",
+      "tags": [
+        "Constitutional Law",
+        "Article 1",
+        "Article 2",
+        "Separation of Powers",
+        "Supremacy"
+      ],
+      "status": "PENDING_REVIEW",
+      "submittedAt": "2026-08-12T20:01:37.607Z"
+    },
+    {
+      "id": "sub_contract_02",
+      "title": "Law of Contract II: Tutorial Problem on Economic Duress and Undue Influence",
+      "courseOrUnit": "Law of Contract II",
+      "description": "Case study problem for tutorial discussion exploring Section 14 and Section 19 of the Contracts Act 2010 with comparative common law precedents.",
+      "lecturerName": "Dr. Sarah Namubiru",
+      "lecturerEmail": "sarah.namubiru@lawhub.ug",
+      "institution": "Uganda Christian University Law Faculty",
+      "academicYear": "2024/2025",
+      "documentType": "Assignments",
+      "fileUrl": "/sample-files/contract_duress_assignment.pdf",
+      "fileName": "Contract_Duress_Tutorial_Assignment.pdf",
+      "fileSize": "215 KB",
+      "fileType": "application/pdf",
+      "fileContent": "TUTORIAL PROBLEM SHEET: ECONOMIC DURESS & UNDUE INFLUENCE\n\nStatutory Basis: Contracts Act 2010 (Act 7 of 2010), Sections 14, 15, 19.\n\nProblem Scenario: Kigozi Construction Ltd contracted with Nile Hauliers to transport road machinery...",
+      "tags": [
+        "Contract Law",
+        "Economic Duress",
+        "Undue Influence",
+        "Contracts Act 2010"
+      ],
+      "status": "PENDING_REVIEW",
+      "submittedAt": "2026-08-13T20:01:37.607Z"
+    },
+    {
+      "id": "sub_crim_03",
+      "title": "Criminal Procedure: High Court Trial Handbook and Charge Sheet Drafting Guide",
+      "courseOrUnit": "Criminal Procedure",
+      "description": "Procedural manual for framing indictments, summary of evidence, plea bargaining rules, and trial rights under Article 28 of the 1995 Constitution.",
+      "lecturerName": "Dr. Apollo Kaggwa",
+      "lecturerEmail": "apollo.kaggwa@lawhub.ug",
+      "institution": "Faculty of Law",
+      "academicYear": "2024/2025",
+      "documentType": "Lecture Notes",
+      "fileName": "Criminal_Procedure_Trial_Handbook.docx",
+      "fileSize": "612 KB",
+      "fileType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "tags": [
+        "Criminal Procedure",
+        "Article 28",
+        "Indictment",
+        "Trial Practice"
+      ],
+      "status": "PUBLISHED",
+      "submittedAt": "2026-08-09T20:01:37.607Z",
+      "reviewedAt": "2026-08-11T02:01:37.607Z",
+      "reviewedBy": "Chief Legal Administrator"
+    },
+    {
+      "id": "sub_cpr_04",
+      "title": "Civil Procedure Rules (S.I. 71-1): Order 36 Summary Procedure Practice Exercise",
+      "courseOrUnit": "Civil Litigation",
+      "description": "Specimen specially endorsed plaint, supporting affidavit, and application for unconditional leave to defend under Order 36 Rule 3.",
+      "lecturerName": "Dr. Sarah Namubiru",
+      "lecturerEmail": "sarah.namubiru@lawhub.ug",
+      "institution": "Uganda Christian University",
+      "academicYear": "2024/2025",
+      "documentType": "Reading Materials",
+      "fileName": "Order_36_Summary_Suit_Practice.pdf",
+      "fileSize": "340 KB",
+      "fileType": "application/pdf",
+      "tags": [
+        "Civil Procedure",
+        "Order 36",
+        "Summary Procedure",
+        "High Court"
+      ],
+      "status": "PUBLISHED",
+      "submittedAt": "2026-08-11T20:01:37.607Z",
+      "reviewedAt": "2026-08-13T14:01:37.607Z",
+      "reviewedBy": "Chief Legal Administrator"
+    }
+  ],
+  "studentSubmissions": [
+    {
+      "id": "stud_sub_01",
+      "assignmentTitle": "Constitutional Law I: Separation of Powers and Supremacy of Constitution Analysis",
+      "courseOrUnit": "Constitutional Law I",
+      "submissionNotes": "Legal essay evaluating Articles 1, 2, 79, 98, and 126 of the 1995 Constitution with analysis of Paul Ssemogerere v AG and Major General David Tinyefuza v AG.",
+      "studentName": "Babirye Zula",
+      "studentEmail": "babiryezula10@gmail.com",
+      "institution": "Gulu University Faculty of Law",
+      "lecturerName": "Dr. Apollo Kaggwa",
+      "lecturerEmail": "apollo.kaggwa@lawhub.ug",
+      "fileName": "Babirye_Zula_Constitutional_Law_Essay.pdf",
+      "fileSize": "348 KB",
+      "fileType": "application/pdf",
+      "fileContent": "FACULTY OF LAW - CONSTITUTIONAL LAW ESSAY\n\nTitle: Constitutional Supremacy and Judicial Review under Article 137\n\nAuthor: Babirye Zula (Reg: 23/U/LAW/001)\n\n1. Foundational Constitutionalism:\nArticle 1(1) of the 1995 Constitution vests all sovereign power in the people of Uganda. Under Article 2, this Constitution is the supreme law and binds all persons and authorities throughout Uganda.\n\n2. Judicial Review Precedents:\nIn Paul K. Ssemogerere & Zachary Olum v Attorney General (Constitutional Appeal No. 1 of 2000), the Supreme Court affirmed that any Act of Parliament that infringes procedural constitutional requirements under Article 79 is void ab initio.",
+      "status": "GRADED",
+      "grade": "88% (A)",
+      "lecturerFeedback": "Excellent analysis of Article 137(1) vs 137(3) jurisdiction. The IRAC formulation of the ratio decidendi in Ssemogerere v AG is thoroughly argued and well supported.",
+      "submittedAt": "2026-08-11T20:33:05.556Z",
+      "reviewedAt": "2026-08-13T20:33:05.556Z",
+      "reviewedBy": "Dr. Apollo Kaggwa"
+    },
+    {
+      "id": "stud_sub_02",
+      "assignmentTitle": "Law of Contract II: Legal Opinion on Economic Duress & Undue Influence",
+      "courseOrUnit": "Law of Contract II",
+      "submissionNotes": "Tutorial assignment assessing statutory provisions under Sections 14, 15, and 19 of the Contracts Act 2010 regarding unconscionable bargains.",
+      "studentName": "Babirye Zula",
+      "studentEmail": "babiryezula10@gmail.com",
+      "institution": "Gulu University Faculty of Law",
+      "lecturerName": "Dr. Sarah Namubiru",
+      "lecturerEmail": "sarah.namubiru@lawhub.ug",
+      "fileName": "Contract_Law_Legal_Opinion_Duress.pdf",
+      "fileSize": "284 KB",
+      "fileType": "application/pdf",
+      "fileContent": "TUTORIAL PROBLEM LEGAL OPINION: ECONOMIC DURESS & UNDUE INFLUENCE\n\nRelevant Legislation: The Contracts Act 2010 (Act No. 7 of 2010), Sections 14, 15, 19.\n\nLegal Issues:\n1. Whether the renegotiation of freight charges constitutes legitimate commercial pressure or actionable economic duress.\n2. Whether the claimant is entitled to restitutionary remedies.",
+      "status": "GRADED",
+      "submittedAt": "2026-08-14T00:33:05.556Z",
+      "grade": "92% (A+)",
+      "lecturerFeedback": "Outstanding legal brief citing S.14 Contracts Act correctly.",
+      "reviewedAt": "2026-08-14T20:33:08.790Z",
+      "reviewedBy": "Dr. Sarah Namubiru"
+    },
+    {
+      "id": "stud_sub_03",
+      "assignmentTitle": "Criminal Procedure: High Court Indictment and Summary of Evidence Drafting",
+      "courseOrUnit": "Criminal Procedure",
+      "submissionNotes": "Draft charge sheet and indictment for Aggravated Robbery c/s 285 & 286(2) of Penal Code Act with complete summary of prosecution witnesses.",
+      "studentName": "Ronald Okello",
+      "studentEmail": "ronald.okello@gulu.ac.ug",
+      "institution": "Gulu University LLB Year 2",
+      "lecturerName": "Dr. Apollo Kaggwa",
+      "lecturerEmail": "apollo.kaggwa@lawhub.ug",
+      "fileName": "Criminal_Procedure_Indictment_Draft.docx",
+      "fileSize": "410 KB",
+      "fileType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "status": "PENDING_REVIEW",
+      "submittedAt": "2026-08-13T08:33:05.556Z"
+    }
+  ],
+  "uploadedDocuments": [
+    {
+      "id": "doc_const_1995",
+      "title": "The Constitution of the Republic of Uganda, 1995 (Consolidated as amended)",
+      "documentType": "Constitution",
+      "category": "Constitutional Law",
+      "description": "Official supreme law of the Republic of Uganda containing 19 Chapters, 288 Articles, 7 Schedules, and constitutional amendments up to Act No. 1 of 2018.",
+      "authorOrInstitution": "Parliament of Uganda / The Uganda Gazette",
+      "source": "Uganda Legal Information Institute (ULII)",
+      "citation": "Const. 1995 (Consolidated Edition)",
+      "year": 1995,
+      "edition": "Consolidated Official Edition",
+      "date": "1995-10-08",
+      "tags": [
+        "Constitution",
+        "Supreme Law",
+        "Fundamental Rights",
+        "Parliament",
+        "19 Chapters"
+      ],
+      "status": "PUBLISHED",
+      "createdAt": "2025-01-10T00:00:00.000Z",
+      "updatedAt": "2025-01-10T00:00:00.000Z",
+      "verifiedBy": "LawHub Editorial Board"
+    },
+    {
+      "id": "doc_land_act_227",
+      "title": "Land Act, Cap 227 (Revised Edition)",
+      "documentType": "Statute",
+      "category": "Property & Land Law",
+      "description": "Comprehensive statutory framework for land tenure, ownership rights, certificates of occupancy, and mandatory spousal consent under Section 39.",
+      "authorOrInstitution": "Parliament of Uganda",
+      "source": "Uganda Gazette / ULII",
+      "citation": "Cap 227",
+      "year": 1998,
+      "edition": "Revised Laws of Uganda",
+      "date": "1998-07-02",
+      "tags": [
+        "Land Act",
+        "Mailo Land",
+        "Spousal Consent",
+        "Tenure Systems"
+      ],
+      "status": "PUBLISHED",
+      "createdAt": "2025-01-12T00:00:00.000Z",
+      "updatedAt": "2025-01-12T00:00:00.000Z",
+      "verifiedBy": "LawHub Editorial Board"
+    },
+    {
+      "id": "doc_contracts_2010",
+      "title": "The Contracts Act, 2010 (Act No. 7 of 2010)",
+      "documentType": "Statute",
+      "category": "Commercial & Contract Law",
+      "description": "Codification of contract principles in Uganda covering offer, acceptance, consideration, vitiating factors, and statutory remedies.",
+      "authorOrInstitution": "Parliament of Uganda",
+      "source": "Uganda Gazette / Ministry of Justice",
+      "citation": "Act 7 of 2010",
+      "year": 2010,
+      "edition": "Official Enactment",
+      "date": "2010-05-14",
+      "tags": [
+        "Contracts Act",
+        "Commercial Law",
+        "Section 10",
+        "Remedies"
+      ],
+      "status": "PUBLISHED",
+      "createdAt": "2025-01-15T00:00:00.000Z",
+      "updatedAt": "2025-01-15T00:00:00.000Z",
+      "verifiedBy": "LawHub Editorial Board"
+    },
+    {
+      "id": "doc_cpr_71_1",
+      "title": "Civil Procedure Rules (S.I. 71-1)",
+      "documentType": "Regulation",
+      "category": "Civil Procedure",
+      "description": "Subsidiary procedural rules governing civil litigation in the High Court and Magistrates Courts of Uganda.",
+      "authorOrInstitution": "Rules Committee / Chief Justice",
+      "source": "Uganda Gazette / Judiciary of Uganda",
+      "citation": "S.I. 71-1",
+      "year": 1964,
+      "edition": "Consolidated Civil Rules",
+      "date": "1964-01-01",
+      "tags": [
+        "Civil Procedure",
+        "Order 6",
+        "Order 7",
+        "Order 36",
+        "Injunctions"
+      ],
+      "status": "PUBLISHED",
+      "createdAt": "2025-01-18T00:00:00.000Z",
+      "updatedAt": "2025-01-18T00:00:00.000Z",
+      "verifiedBy": "LawHub Editorial Board"
+    },
+    {
+      "id": "doc_case_obbo_mwenda",
+      "title": "Charles Onyango Obbo & Andrew Mwenda v Attorney General",
+      "documentType": "Case Law",
+      "category": "Constitutional Law",
+      "description": "Supreme Court landmark judgment striking down Section 50 of Penal Code Act (false news) under Article 29 freedom of speech protections.",
+      "authorOrInstitution": "Supreme Court of Uganda",
+      "source": "ULII [2004] UGSC 1",
+      "citation": "[2004] UGSC 1 / Const. Appeal No. 2 of 2002",
+      "year": 2004,
+      "edition": "Law Reports of Uganda",
+      "date": "2004-02-11",
+      "tags": [
+        "Freedom of Expression",
+        "Article 29",
+        "Article 43",
+        "Constitutional Law"
+      ],
+      "status": "PUBLISHED",
+      "createdAt": "2025-01-20T00:00:00.000Z",
+      "updatedAt": "2025-01-20T00:00:00.000Z",
+      "verifiedBy": "LawHub Editorial Board"
+    }
+  ],
+  "uploadedConstitutionData": [
+    {
+      "id": "const_official_doc_1995",
+      "title": "The Constitution of the Republic of Uganda, 1995 (As Amended)",
+      "source": "Uganda Legal Information Institute (ULII) / The Uganda Gazette",
+      "institution": "Parliament of Uganda",
+      "edition": "Consolidated Official Edition (Including 2000, 2005, 2015, and 2018 Amendments)",
+      "datePromulgated": "8th October 1995",
+      "totalChapters": 19,
+      "totalArticles": 288,
+      "schedulesCount": 7,
+      "uploadedBy": "Chief Legal Administrator",
+      "uploadedAt": "2025-01-05T00:00:00.000Z",
+      "fileName": "Constitution_of_Uganda_1995_Consolidated.pdf",
+      "fileSize": "2.4 MB",
+      "verificationStatus": "VERIFIED",
+      "citation": "Const. 1995 (Consolidated 2023 Edition)"
+    }
+  ],
+  "lastSaved": "2026-08-14T21:00:53.131Z"
+}

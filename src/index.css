@@ -1,0 +1,102 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --bg-black: #0c0c0e;
+    --bg-navy-dark: rgba(18, 18, 20, 0.75);
+    --bg-navy-surface: rgba(24, 24, 28, 0.7);
+    --bg-navy-card: rgba(20, 20, 24, 0.65);
+    --bg-navy-card-hover: rgba(30, 30, 36, 0.8);
+    --text-primary: #f8fafc;
+    --text-muted: #cbd5e1;
+    --text-dim: #94a3b8;
+    --accent-gold: #c89d42;
+    --accent-gold-light: #dfb858;
+    --accent-gold-dark: #a97e29;
+    --border-subtle: rgba(255, 255, 255, 0.08);
+    --border-gold: rgba(200, 157, 66, 0.35);
+  }
+
+  body {
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: #0c0c0e;
+    color: #f8fafc;
+    min-height: 100vh;
+  }
+
+  h1, h2, h3, .font-heading {
+    font-family: 'Cinzel', Georgia, 'Times New Roman', serif;
+  }
+}
+
+/* Subtle Law-Tech Pinstripe Matrix */
+.bg-pinstripe {
+  background-image: repeating-linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.012) 0px,
+    rgba(255, 255, 255, 0.012) 1px,
+    transparent 1px,
+    transparent 48px
+  );
+}
+
+/* Custom Scrollbar - Elegant Gold / Charcoal Tone */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(9, 9, 11, 0.8);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(200, 157, 66, 0.35);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(200, 157, 66, 0.65);
+}
+
+/* Legal Library Glass Cards & Panels */
+.law-card {
+  background-color: rgba(18, 18, 22, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 1.25rem;
+  transition: all 0.25s ease-in-out;
+}
+.law-card:hover {
+  border-color: rgba(200, 157, 66, 0.35);
+  background-color: rgba(26, 26, 32, 0.7);
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.6);
+}
+
+.law-card-gold {
+  background-color: rgba(20, 20, 26, 0.65);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(200, 157, 66, 0.35);
+  border-radius: 1.25rem;
+  box-shadow: 0 8px 32px 0 rgba(200, 157, 66, 0.08);
+}
+
+.law-glass {
+  background: rgba(14, 14, 18, 0.6);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.law-glass-card {
+  background: rgba(16, 16, 20, 0.55);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 12px 36px 0 rgba(0, 0, 0, 0.5);
+}
+
+/* Selection */
+::selection {
+  background-color: #c89d42;
+  color: #09090b;
+}
