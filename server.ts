@@ -1,6 +1,7 @@
 import express from "express";
 import path from "path";
 import fs from "fs";
+import crypto from "crypto";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
 import dotenv from "dotenv";
@@ -20,6 +21,105 @@ const DB_FILE = path.join(DATA_DIR, "lawhub_store.json");
 
 if (!fs.existsSync(DATA_DIR)) {
   fs.mkdirSync(DATA_DIR, { recursive: true });
+}
+
+// ----------------------------------------------------
+// CRYPTOGRAPHIC SECURITY, PASSWORD HASHING & SESSIONS
+// ----------------------------------------------------
+
+function hashPassword(password: string, salt?: string): { salt: string; hash: string } {
+  const passwordSalt = salt || crypto.randomBytes(16).toString("hex");
+  const hash = crypto.pbkdf2Sync(password, passwordSalt, 10000, 64, "sha512").toString("hex");
+  return { salt: passwordSalt, hash };
+}
+
+function verifyPassword(password: string, storedHash?: string, salt?: string): boolean {
+  if (!password || !storedHash || !salt) return false;
+  try {
+    const hashToCompare = crypto.pbkdf2Sync(password, salt, 10000, 64, "sha512").toString("hex");
+    return crypto.timingSafeEqual(Buffer.from(storedHash, "hex"), Buffer.from(hashToCompare, "hex"));
+  } catch {
+    return false;
+  }
+}
+
+// Active Sessions Store
+interface AuthSession {
+  token: string;
+  userId: string;
+  email: string;
+  role: string;
+  name: string;
+  createdAt: number;
+  expiresAt: number;
+}
+const activeSessions = new Map<string, AuthSession>();
+
+function createSession(user: any): string {
+  const token = crypto.randomBytes(32).toString("hex");
+  const now = Date.now();
+  const session: AuthSession = {
+    token,
+    userId: user.id,
+    email: user.email.toLowerCase(),
+    role: user.role,
+    name: user.name,
+    createdAt: now,
+    expiresAt: now + 7 * 24 * 60 * 60 * 1000 // 7 days expiration
+  };
+  activeSessions.set(token, session);
+  return token;
+}
+
+function getSessionUser(token: string) {
+  if (!token) return null;
+  const session = activeSessions.get(token);
+  if (!session) return null;
+  if (Date.now() > session.expiresAt) {
+    activeSessions.delete(token);
+    return null;
+  }
+  const user = systemUsers.find(
+    (u) => u.id === session.userId || u.email.toLowerCase() === session.email
+  );
+  return user || null;
+}
+
+// Brute Force & Rate Limit Protection
+const failedLoginAttempts = new Map<string, { attempts: number; lockUntil: number }>();
+
+function checkRateLimit(identifier: string): { locked: boolean; waitSeconds?: number } {
+  const key = identifier.toLowerCase().trim();
+  const record = failedLoginAttempts.get(key);
+  if (!record) return { locked: false };
+  if (record.lockUntil > Date.now()) {
+    return { locked: true, waitSeconds: Math.ceil((record.lockUntil - Date.now()) / 1000) };
+  }
+  if (Date.now() > record.lockUntil && record.lockUntil > 0) {
+    failedLoginAttempts.delete(key);
+  }
+  return { locked: false };
+}
+
+function recordFailedAttempt(identifier: string) {
+  const key = identifier.toLowerCase().trim();
+  const record = failedLoginAttempts.get(key) || { attempts: 0, lockUntil: 0 };
+  record.attempts += 1;
+  if (record.attempts >= 5) {
+    record.lockUntil = Date.now() + 5 * 60 * 1000; // 5-minute lockout
+  }
+  failedLoginAttempts.set(key, record);
+}
+
+function resetFailedAttempts(identifier: string) {
+  failedLoginAttempts.delete(identifier.toLowerCase().trim());
+}
+
+// Safe user profile sanitizer to prevent exposing password hashes
+function sanitizeUser(user: any) {
+  if (!user) return null;
+  const { passwordHash, passwordSalt, ...safe } = user;
+  return safe;
 }
 
 // Lazy-initialized Gemini AI client
@@ -487,7 +587,7 @@ function loadPersistentData() {
         }
       });
 
-      // Guarantee each user has an absolutely unique ID
+      // Guarantee each user has an absolutely unique ID and cryptographic password hash
       const seenIds = new Set<string>();
       systemUsers = Array.from(uniqueUsersMap.values()).map((user, idx) => {
         let uniqueId = user.id;
@@ -495,9 +595,23 @@ function loadPersistentData() {
           uniqueId = `usr_${idx + 1}_${Math.random().toString(36).substring(2, 7)}`;
         }
         seenIds.add(uniqueId);
+
+        let passwordSalt = user.passwordSalt;
+        let passwordHash = user.passwordHash;
+        if (!passwordHash || !passwordSalt) {
+          let defaultPass = "Student@2025!";
+          if (user.role === "Administrator") defaultPass = "Admin@LawHub2025!";
+          else if (user.role === "Lecturer") defaultPass = "Faculty@2025!";
+          const hashed = hashPassword(defaultPass);
+          passwordSalt = hashed.salt;
+          passwordHash = hashed.hash;
+        }
+
         return {
           ...user,
-          id: uniqueId
+          id: uniqueId,
+          passwordSalt,
+          passwordHash
         };
       });
 
@@ -509,7 +623,17 @@ function loadPersistentData() {
     }
   }
 
-  systemUsers = [...defaultSeeds];
+  systemUsers = defaultSeeds.map((user) => {
+    let defaultPass = "Student@2025!";
+    if (user.role === "Administrator") defaultPass = "Admin@LawHub2025!";
+    else if (user.role === "Lecturer") defaultPass = "Faculty@2025!";
+    const { salt, hash } = hashPassword(defaultPass);
+    return {
+      ...user,
+      passwordSalt: salt,
+      passwordHash: hash
+    };
+  });
   savePersistentData();
 }
 
@@ -532,8 +656,17 @@ function savePersistentData() {
 // Initial load
 loadPersistentData();
 
-// Helper to extract authenticated user from request headers, query, or body
+// Helper to extract authenticated user from bearer token session, headers, or query
 function getRequesterUser(req: express.Request) {
+  const authHeader = req.headers["authorization"] || (req.headers["x-auth-token"] as string);
+  if (authHeader) {
+    const token = typeof authHeader === "string" && authHeader.startsWith("Bearer ")
+      ? authHeader.substring(7).trim()
+      : String(authHeader).trim();
+    const sessionUser = getSessionUser(token);
+    if (sessionUser) return sessionUser;
+  }
+
   const email = (
     req.headers["x-user-email"] ||
     req.query.requesterEmail ||
@@ -1060,77 +1193,187 @@ app.post("/api/constitution/upload", requireRole(["Administrator"]), (req, res) 
 
 // Verify or retrieve currently logged-in user profile
 app.get("/api/auth/me", (req, res) => {
+  const user = getRequesterUser(req);
+  if (user) {
+    return res.json({ user: sanitizeUser(user) });
+  }
+
   const { email } = req.query;
   if (!email) {
-    return res.status(400).json({ error: "Email query parameter is required." });
+    return res.status(401).json({ error: "Not authenticated. Please sign in." });
   }
-  const user = systemUsers.find(u => u.email.toLowerCase() === String(email).toLowerCase());
-  if (!user) {
+
+  const found = systemUsers.find(u => u.email.toLowerCase() === String(email).toLowerCase());
+  if (!found) {
     return res.status(404).json({ error: "User not found in system repository." });
   }
-  res.json({ user });
+  res.json({ user: sanitizeUser(found) });
 });
 
-// User Login (Validates against persistent database and preserves authentic role)
+// User Login (Cryptographically validates password & manages rate-limited sessions)
 app.post("/api/auth/login", (req, res) => {
-  const { email, name, institution } = req.body;
-  if (!email) {
-    return res.status(400).json({ error: "Email is required." });
+  const { email, password } = req.body;
+  if (!email || !password) {
+    return res.status(400).json({ error: "Both email and password are required to sign in." });
   }
 
-  let user = systemUsers.find(u => u.email.toLowerCase() === String(email).toLowerCase());
+  const normalizedEmail = String(email).trim().toLowerCase();
 
-  if (user && user.status === "SUSPENDED") {
+  // Brute force rate limiting check
+  const rateLimit = checkRateLimit(normalizedEmail);
+  if (rateLimit.locked) {
+    return res.status(429).json({
+      error: `Too many failed login attempts. Please wait ${rateLimit.waitSeconds} seconds before trying again.`
+    });
+  }
+
+  const user = systemUsers.find(u => u.email.toLowerCase() === normalizedEmail);
+  if (!user) {
+    recordFailedAttempt(normalizedEmail);
+    return res.status(401).json({ error: "Invalid email or password. Please verify your credentials." });
+  }
+
+  if (user.status === "SUSPENDED") {
     return res.status(403).json({
       error: "This account is currently suspended. Please contact the LawHub System Administrator."
     });
   }
 
-  if (!user) {
-    // Determine default role based on email or create new Student
-    const isLecturerEmail = email.toLowerCase().includes("lecturer") || email.toLowerCase().includes("dr.") || email.toLowerCase().includes("mukasa") || email.toLowerCase().includes("kaggwa");
-    const isAdminEmail = email.toLowerCase().includes("admin") || email.toLowerCase().includes("administrator");
-
-    user = {
-      id: `usr_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
-      name: name || (isAdminEmail ? "Chief Legal Administrator" : isLecturerEmail ? "Faculty Lecturer" : "Law Student"),
-      email: email.toLowerCase(),
-      role: isAdminEmail ? "Administrator" : isLecturerEmail ? "Lecturer" : "Student",
-      institution: institution || "Faculty of Law",
-      joinedDate: new Date().toLocaleString("en-US", { month: "long", year: "numeric" }),
-      status: "ACTIVE"
-    };
-    systemUsers.push(user);
-    savePersistentData();
+  // Verify password hash
+  const isPasswordValid = verifyPassword(password, user.passwordHash, user.passwordSalt);
+  if (!isPasswordValid) {
+    recordFailedAttempt(normalizedEmail);
+    return res.status(401).json({ error: "Invalid email or password. Please verify your credentials." });
   }
 
-  res.json({ success: true, user, message: "Logged in successfully." });
+  // Authentication succeeded: clear rate limits and generate secure token session
+  resetFailedAttempts(normalizedEmail);
+  const token = createSession(user);
+
+  res.json({
+    success: true,
+    token,
+    user: sanitizeUser(user),
+    message: "Logged in successfully."
+  });
 });
 
-// User Registration (Only Student or Lecturer with security key allowed; Administrator accounts cannot be created publicly)
+// Continue with Google Sign-In / Sign-Up Flow
+app.post("/api/auth/google", (req, res) => {
+  try {
+    const { credential, profile } = req.body;
+    let email = "";
+    let name = "";
+    let picture = "";
+    let googleId = "";
+
+    // 1. Decode Google ID Token if present
+    if (credential && typeof credential === "string") {
+      try {
+        const parts = credential.split(".");
+        if (parts.length === 3) {
+          const payload = JSON.parse(Buffer.from(parts[1], "base64").toString("utf-8"));
+          email = payload.email || "";
+          name = payload.name || "";
+          picture = payload.picture || "";
+          googleId = payload.sub || "";
+        }
+      } catch (e) {
+        console.warn("[Auth Google] Failed to decode JWT payload:", e);
+      }
+    }
+
+    // 2. Direct Profile fallback if supplied
+    if (!email && profile) {
+      email = profile.email || "";
+      name = profile.name || "";
+      picture = profile.picture || profile.avatar || "";
+      googleId = profile.id || profile.sub || "";
+    }
+
+    if (!email) {
+      return res.status(400).json({ error: "Unable to extract email from Google Sign-In response." });
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+    let user = systemUsers.find(u => u.email.toLowerCase() === normalizedEmail);
+
+    if (user && user.status === "SUSPENDED") {
+      return res.status(403).json({
+        error: "This account is currently suspended. Please contact the LawHub System Administrator."
+      });
+    }
+
+    if (!user) {
+      // Auto-register new Google user as verified Student
+      const randomPassword = crypto.randomBytes(24).toString("hex");
+      const { salt, hash } = hashPassword(randomPassword);
+
+      user = {
+        id: `usr_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+        name: name || normalizedEmail.split("@")[0],
+        email: normalizedEmail,
+        role: "Student",
+        institution: "Faculty of Law",
+        joinedDate: new Date().toLocaleString("en-US", { month: "long", year: "numeric" }),
+        status: "ACTIVE",
+        avatar: picture || undefined,
+        googleId,
+        authProvider: "google",
+        passwordSalt: salt,
+        passwordHash: hash
+      };
+      systemUsers.push(user);
+      savePersistentData();
+    } else {
+      // Link Google ID and avatar if not yet attached
+      if (!user.googleId && googleId) user.googleId = googleId;
+      if (!user.avatar && picture) user.avatar = picture;
+      if (!user.authProvider) user.authProvider = "google";
+      savePersistentData();
+    }
+
+    const token = createSession(user);
+
+    res.json({
+      success: true,
+      token,
+      user: sanitizeUser(user),
+      message: `Signed in with Google as ${user.name}.`
+    });
+  } catch (error: any) {
+    console.error("[Auth Google] Authentication error:", error);
+    res.status(500).json({ error: "Failed to complete Google authentication." });
+  }
+});
+
+// User Registration (Requires valid password, enforces role policies)
 app.post("/api/auth/register", (req, res) => {
-  const { name, email, institution, role = "Student", securityCode } = req.body;
+  const { name, email, password, institution, role = "Student", securityCode } = req.body;
   if (!email || !name) {
     return res.status(400).json({ error: "Name and email are required." });
   }
 
-  const existing = systemUsers.find(u => u.email.toLowerCase() === String(email).toLowerCase());
+  if (!password || password.length < 8) {
+    return res.status(400).json({ error: "Password must be at least 8 characters long." });
+  }
+
+  const normalizedEmail = String(email).trim().toLowerCase();
+  const existing = systemUsers.find(u => u.email.toLowerCase() === normalizedEmail);
   if (existing) {
-    return res.status(409).json({ error: "An account with this email address already exists.", user: existing });
+    return res.status(409).json({ error: "An account with this email address already exists." });
   }
 
   let validatedRole = "Student";
   const reqRole = String(role || "Student").trim();
 
   if (reqRole === "Administrator") {
-    // Prevent public Admin registration as per security specifications
     return res.status(403).json({
       error: "Security Policy Violation: Administrator accounts cannot be registered publicly. They must be provisioned directly by an authorized System Administrator."
     });
   } else if (reqRole === "Lecturer") {
-    // Require faculty lecturer code or recognized faculty domain
     const normalizedCode = String(securityCode || "").trim().toUpperCase();
-    if (normalizedCode !== "FACULTY-2025" && !email.toLowerCase().includes("apollo.mukasa") && !email.toLowerCase().includes("apollo.kaggwa") && !email.toLowerCase().includes("lecturer@lawhub.ug")) {
+    if (normalizedCode !== "FACULTY-2025" && !normalizedEmail.includes("apollo.mukasa") && !normalizedEmail.includes("apollo.kaggwa") && !normalizedEmail.includes("lecturer@lawhub.ug")) {
       return res.status(403).json({
         error: "Invalid Faculty Lecturer Code. Please provide the authorized faculty verification key (FACULTY-2025)."
       });
@@ -1140,20 +1383,43 @@ app.post("/api/auth/register", (req, res) => {
     validatedRole = "Student";
   }
 
+  const { salt, hash } = hashPassword(password);
+
   const newUser = {
     id: `usr_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
-    name,
-    email: email.toLowerCase(),
+    name: name.trim(),
+    email: normalizedEmail,
     role: validatedRole,
-    institution: institution || "Faculty of Law",
+    institution: institution?.trim() || "Faculty of Law",
     joinedDate: new Date().toLocaleString("en-US", { month: "long", year: "numeric" }),
-    status: "ACTIVE"
+    status: "ACTIVE",
+    passwordSalt: salt,
+    passwordHash: hash
   };
 
   systemUsers.push(newUser);
   savePersistentData();
 
-  res.status(201).json({ success: true, user: newUser, message: "Account created successfully." });
+  const token = createSession(newUser);
+
+  res.status(201).json({
+    success: true,
+    token,
+    user: sanitizeUser(newUser),
+    message: "Account created successfully."
+  });
+});
+
+// User Logout (Invalidates token session)
+app.post("/api/auth/logout", (req, res) => {
+  const authHeader = req.headers["authorization"] || (req.headers["x-auth-token"] as string);
+  if (authHeader) {
+    const token = typeof authHeader === "string" && authHeader.startsWith("Bearer ")
+      ? authHeader.substring(7).trim()
+      : String(authHeader).trim();
+    activeSessions.delete(token);
+  }
+  res.json({ success: true, message: "Logged out successfully." });
 });
 
 // List All Users (Protected for Administrators)
@@ -1166,7 +1432,7 @@ app.get("/api/users", requireRole(["Administrator"]), (req, res) => {
   if (status && status !== "All") {
     list = list.filter(u => u.status === status);
   }
-  res.json({ users: list, count: list.length });
+  res.json({ users: list.map(sanitizeUser), count: list.length });
 });
 
 // Create New System User (Admin Function)

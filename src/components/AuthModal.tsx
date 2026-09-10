@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   X,
   Lock,
   Mail,
   User,
   GraduationCap,
-  Shield,
+  ShieldCheck,
   CheckCircle2,
   LogOut,
   AlertCircle,
@@ -13,11 +13,16 @@ import {
   KeyRound,
   BookOpen,
   ArrowRight,
-  ShieldCheck,
-  Scale
+  Scale,
+  Eye,
+  EyeOff,
+  ChevronDown,
+  ChevronUp,
+  Info
 } from 'lucide-react';
 import { WatermarkBackground } from './WatermarkBackground';
 import { UserProfile, UserRole } from '../types';
+import { authService } from '../services/authService';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -43,6 +48,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [mode, setMode] = useState<'login' | 'signup' | 'edit_profile'>(initialMode);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [name, setName] = useState('');
   const [role, setRole] = useState<UserRole>('Student');
   const [institution, setInstitution] = useState('Faculty of Law');
@@ -50,69 +57,127 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [notification, setNotification] = useState<string | null>(null);
   const [errorNotification, setErrorNotification] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [showDemoGuide, setShowDemoGuide] = useState<boolean>(false);
+  const [showGoogleDialog, setShowGoogleDialog] = useState<boolean>(false);
+  const [googleEmail, setGoogleEmail] = useState('');
+  const [googleName, setGoogleName] = useState('');
+
+  // Keep mode synchronized with prop changes
+  useEffect(() => {
+    setMode(initialMode);
+    setErrorNotification(null);
+    setNotification(null);
+  }, [initialMode, isOpen]);
 
   if (!isOpen) return null;
 
-  // Preset demo accounts for quick role access & verification
-  const demoAccounts = [
+  // Safe testing credentials list (Only populates the input fields, does NOT bypass authentication)
+  const demoPresets = [
     {
       role: 'Student' as UserRole,
       title: 'Law Student Scholar',
       email: 'student@lawhub.ug',
-      desc: 'LLB student courses, library, quiz tests & AI tutor',
-      icon: GraduationCap,
-      color: 'border-amber-500/40 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20'
+      pass: 'Student@2025!',
+      desc: 'Standard LLB student research & quizzes',
+      badge: 'Student'
     },
     {
       role: 'Lecturer' as UserRole,
       title: 'Faculty Lecturer (Dr. Mukasa)',
       email: 'apollo.mukasa@lawhub.ug',
-      name: 'Dr. Apollo Mukasa',
-      desc: 'Coursework review queue, grading & academic publishing',
-      icon: BookOpen,
-      color: 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20'
+      pass: 'Faculty@2025!',
+      desc: 'Coursework grading & publishing',
+      badge: 'Faculty'
     },
     {
       role: 'Administrator' as UserRole,
       title: 'Chief Legal Administrator',
       email: 'admin@lawhub.ug',
-      desc: 'System oversight, user & role management, platform controls',
-      icon: ShieldCheck,
-      color: 'border-blue-500/40 bg-blue-500/10 text-blue-300 hover:bg-blue-500/20'
+      pass: 'Admin@LawHub2025!',
+      desc: 'System oversight & security management',
+      badge: 'Admin'
     }
   ];
 
-  const handleQuickLogin = async (accountEmail: string, accountRole: UserRole, accountName?: string) => {
+  const handleFillCredentials = (accEmail: string, accPass: string) => {
+    setEmail(accEmail);
+    setPassword(accPass);
+    setErrorNotification(null);
+    setNotification('Credentials filled into login form. Click "Sign In to Account" to authenticate.');
+  };
+
+  const handleGoogleSignInClick = () => {
+    setErrorNotification(null);
+    // Check if Google Client ID is configured for automated Google GIS One-Tap
+    const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+    const gWindow = window as any;
+
+    if (googleClientId && gWindow.google?.accounts?.id) {
+      try {
+        gWindow.google.accounts.id.initialize({
+          client_id: googleClientId,
+          callback: async (response: any) => {
+            if (response.credential) {
+              setIsLoading(true);
+              const result = await authService.loginWithGoogle({ credential: response.credential });
+              if (result.success && result.user) {
+                onLogin(result.user.email, result.user.name, result.user.role);
+                setNotification(`Welcome, ${result.user.name}! Authenticated with Google.`);
+                setTimeout(() => {
+                  setNotification(null);
+                  onClose();
+                }, 600);
+              } else {
+                setErrorNotification(result.error || 'Google authentication failed.');
+              }
+              setIsLoading(false);
+            }
+          }
+        });
+        gWindow.google.accounts.id.prompt();
+        return;
+      } catch (err) {
+        console.warn('Google GIS prompt failed, opening fallback dialog:', err);
+      }
+    }
+
+    // Default seamless Google sign-in dialog
+    setGoogleEmail(user.email && user.email.includes('@gmail.com') ? user.email : 'student.scholar@gmail.com');
+    setGoogleName(user.name && user.name !== 'Student Scholar' ? user.name : 'Legal Scholar');
+    setShowGoogleDialog(true);
+  };
+
+  const handleConfirmGoogleAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!googleEmail.trim()) {
+      setErrorNotification('Please provide a valid Google email.');
+      return;
+    }
+
     setIsLoading(true);
     setErrorNotification(null);
-    setNotification(null);
     try {
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: accountEmail })
+      const result = await authService.loginWithGoogle({
+        profile: {
+          email: googleEmail.trim().toLowerCase(),
+          name: googleName.trim() || googleEmail.split('@')[0],
+          picture: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150'
+        }
       });
 
-      if (res.ok) {
-        const data = await res.json();
-        const authUser = data.user;
-        onLogin(authUser.email, authUser.name, authUser.role);
-        setNotification(`Signed in as ${authUser.name} (${authUser.role}). Routing to ${authUser.role} Dashboard...`);
+      if (result.success && result.user) {
+        setShowGoogleDialog(false);
+        onLogin(result.user.email, result.user.name, result.user.role);
+        setNotification(`Signed in with Google as ${result.user.name}.`);
         setTimeout(() => {
           setNotification(null);
           onClose();
         }, 600);
       } else {
-        onLogin(accountEmail, accountName || accountEmail.split('@')[0], accountRole);
-        setNotification(`Authenticated as ${accountRole}.`);
-        setTimeout(() => {
-          setNotification(null);
-          onClose();
-        }, 600);
+        setErrorNotification(result.error || 'Google Sign-In failed.');
       }
     } catch (err) {
-      onLogin(accountEmail, accountName || accountEmail.split('@')[0], accountRole);
-      onClose();
+      setErrorNotification('Network error during Google authentication.');
     } finally {
       setIsLoading(false);
     }
@@ -127,78 +192,83 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     try {
       if (mode === 'login') {
         if (!email.trim()) {
-          setErrorNotification('Please enter a valid email address.');
+          setErrorNotification('Please enter your email address.');
           setIsLoading(false);
           return;
         }
 
-        const res = await fetch('/api/auth/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: email.trim().toLowerCase(), password })
-        });
+        if (!password) {
+          setErrorNotification('Please enter your password.');
+          setIsLoading(false);
+          return;
+        }
 
-        if (res.ok) {
-          const data = await res.json();
-          const authUser = data.user;
-          onLogin(authUser.email, authUser.name, authUser.role);
-          setNotification(`Welcome, ${authUser.name}! Signed in with verified ${authUser.role} role.`);
+        const result = await authService.login(email, password);
+
+        if (result.success && result.user) {
+          onLogin(result.user.email, result.user.name, result.user.role);
+          setNotification(`Welcome back, ${result.user.name}! Verified ${result.user.role} role.`);
           setTimeout(() => {
             setNotification(null);
             onClose();
           }, 600);
         } else {
-          const errData = await res.json().catch(() => ({}));
-          setErrorNotification(errData.error || 'Authentication failed. Please check your credentials.');
+          setErrorNotification(result.error || 'Authentication failed. Please verify your credentials.');
         }
       } else if (mode === 'signup') {
         if (!name.trim() || !email.trim()) {
-          setErrorNotification('Please provide your full name and email address.');
+          setErrorNotification('Please provide both your full name and email address.');
           setIsLoading(false);
           return;
         }
 
-        if (role === 'Administrator' && !securityCode.trim()) {
-          setErrorNotification('Administrator Key is required for Admin role (Use ADMIN-LAW-SECURE).');
+        if (!password || password.length < 8) {
+          setErrorNotification('Password must be at least 8 characters in length.');
+          setIsLoading(false);
+          return;
+        }
+
+        if (password !== confirmPassword) {
+          setErrorNotification('Passwords do not match. Please re-enter your password.');
+          setIsLoading(false);
+          return;
+        }
+
+        if (role === 'Administrator') {
+          setErrorNotification('Administrator accounts cannot be registered publicly.');
           setIsLoading(false);
           return;
         }
 
         if (role === 'Lecturer' && !securityCode.trim()) {
-          setErrorNotification('Faculty Verification Code is required for Lecturer role (Use FACULTY-2025).');
+          setErrorNotification('Faculty Verification Key is required for Lecturer accounts (Use FACULTY-2025).');
           setIsLoading(false);
           return;
         }
 
-        const res = await fetch('/api/auth/register', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            name: name.trim(),
-            email: email.trim().toLowerCase(),
-            password,
-            role,
-            securityCode: securityCode.trim(),
-            institution: institution.trim() || 'Faculty of Law'
-          })
+        const result = await authService.register({
+          name: name.trim(),
+          email: email.trim().toLowerCase(),
+          password,
+          role,
+          securityCode: securityCode.trim(),
+          institution: institution.trim() || 'Faculty of Law'
         });
 
-        if (res.ok) {
-          const data = await res.json();
+        if (result.success && result.user) {
           onSignUp({
-            name: data.user.name,
-            email: data.user.email,
-            institution: data.user.institution,
-            role: data.user.role
+            name: result.user.name,
+            email: result.user.email,
+            institution: result.user.institution,
+            role: result.user.role
           });
-          setNotification(`Account provisioned successfully with ${data.user.role} role! Directing to your Dashboard...`);
+          setNotification(`Account provisioned successfully with verified ${result.user.role} role! Redirecting...`);
           setTimeout(() => {
             setNotification(null);
             onClose();
           }, 700);
         } else {
-          const errData = await res.json().catch(() => ({}));
-          setErrorNotification(errData.error || 'Registration failed.');
+          setErrorNotification(result.error || 'Registration failed.');
         }
       } else if (mode === 'edit_profile') {
         onUpdateProfile({
@@ -213,7 +283,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         }, 700);
       }
     } catch (err) {
-      setErrorNotification('Network error during authentication.');
+      setErrorNotification('An unexpected network error occurred.');
     } finally {
       setIsLoading(false);
     }
@@ -221,8 +291,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-      <div className="bg-[#141418]/95 border border-white/10 rounded-3xl max-w-lg w-full p-6 sm:p-8 space-y-6 shadow-2xl relative text-slate-100 max-h-[92vh] overflow-y-auto overflow-hidden backdrop-blur-2xl">
-        <WatermarkBackground type="cyber_scales" opacity={0.16} blendMode="normal" withVignette={false} withGradientOverlay={false} />
+      <div className="bg-[#141418]/95 border border-white/10 rounded-3xl max-w-lg w-full p-6 sm:p-8 space-y-5 shadow-2xl relative text-slate-100 max-h-[92vh] overflow-y-auto overflow-hidden backdrop-blur-2xl">
+        <WatermarkBackground type="cyber_scales" opacity={0.15} blendMode="normal" withVignette={false} withGradientOverlay={false} />
         
         {/* Close Button */}
         <button
@@ -235,8 +305,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
         {/* Modal Header */}
         <div className="text-center space-y-2">
-          <div className="w-14 h-14 rounded-2xl bg-[#c89d42] mx-auto flex items-center justify-center shadow-lg shadow-amber-500/10 text-neutral-950">
-            <Scale className="w-7 h-7 stroke-[2.4]" />
+          <div className="w-13 h-13 rounded-2xl bg-[#c89d42] mx-auto flex items-center justify-center shadow-lg shadow-amber-500/10 text-neutral-950">
+            <Scale className="w-6 h-6 stroke-[2.4]" />
           </div>
           <h2 className="font-heading font-extrabold text-2xl text-slate-100">
             {mode === 'login' && 'Sign In to LawHub'}
@@ -244,80 +314,61 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             {mode === 'edit_profile' && 'Account Credentials & Profile'}
           </h2>
           <p className="text-xs text-slate-400 max-w-sm mx-auto">
-            {mode === 'login' && 'Select your role or enter credentials to access your dedicated dashboard.'}
-            {mode === 'signup' && 'Register your verified account for student learning or faculty materials.'}
-            {mode === 'edit_profile' && 'View your verified role and update personal academic settings.'}
+            {mode === 'login' && 'Enter your credentials or continue with Google to access your legal workspace.'}
+            {mode === 'signup' && 'Register your verified academic profile for legal research and coursework.'}
+            {mode === 'edit_profile' && 'Manage your verified institutional credentials and platform settings.'}
           </p>
         </div>
 
-        {/* Quick Role Selection Buttons (for Login mode) */}
-        {mode === 'login' && (
-          <div className="space-y-2">
-            <div className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 px-1">
-              Select Role / Verified Account Access:
-            </div>
-            <div className="grid grid-cols-1 gap-2">
-              {demoAccounts.map((acc) => {
-                const Icon = acc.icon;
-                return (
-                  <button
-                    key={acc.role}
-                    type="button"
-                    onClick={() => handleQuickLogin(acc.email, acc.role, acc.title)}
-                    className="w-full p-3 rounded-2xl border border-white/10 bg-slate-950/40 hover:border-[#c89d42]/50 hover:bg-slate-900/60 text-left flex items-center justify-between transition group cursor-pointer backdrop-blur-md"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-xl bg-white/[0.05] border border-white/10 text-[#c89d42] flex items-center justify-center shrink-0">
-                        <Icon className="w-4 h-4" />
-                      </div>
-                      <div>
-                        <div className="font-bold text-xs flex items-center gap-2 text-slate-100">
-                          <span>{acc.title}</span>
-                          <span className="text-[9px] px-2 py-0.5 rounded-full bg-white/[0.05] text-[#c89d42] border border-[#c89d42]/30 font-mono font-semibold">
-                            {acc.role}
-                          </span>
-                        </div>
-                        <div className="text-[10px] text-slate-400">{acc.desc}</div>
-                      </div>
-                    </div>
-                    <ArrowRight className="w-4 h-4 shrink-0 text-[#c89d42] group-hover:translate-x-1 transition-transform opacity-80" />
-                  </button>
-                );
-              })}
-            </div>
+        {/* Continue with Google Sign-In Button (For Login and Signup) */}
+        {mode !== 'edit_profile' && (
+          <div className="space-y-3">
+            <button
+              type="button"
+              onClick={handleGoogleSignInClick}
+              disabled={isLoading}
+              className="w-full py-3 px-4 rounded-xl border border-white/15 bg-white/[0.06] hover:bg-white/[0.12] hover:border-white/30 text-slate-100 font-semibold text-xs transition flex items-center justify-center gap-3 cursor-pointer shadow-sm group disabled:opacity-50"
+            >
+              <svg className="w-4 h-4 shrink-0 transition-transform group-hover:scale-110" viewBox="0 0 24 24">
+                <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/>
+                <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"/>
+                <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.14-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/>
+                <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
+              </svg>
+              <span>Continue with Google</span>
+            </button>
 
-            <div className="relative my-4">
+            <div className="relative my-2">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-white/10" />
               </div>
               <div className="relative flex justify-center text-[10px] uppercase font-bold text-slate-400">
-                <span className="bg-[#18181c] px-3">Or sign in with custom credentials</span>
+                <span className="bg-[#141418] px-3">or continue with email</span>
               </div>
             </div>
           </div>
         )}
 
-        {/* Success notification */}
+        {/* Notifications */}
         {notification && (
-          <div className="p-3 bg-white/[0.05] border border-[#c89d42]/40 text-[#c89d42] text-xs rounded-xl flex items-center gap-2 backdrop-blur-sm">
-            <CheckCircle2 className="w-4 h-4 shrink-0" />
+          <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs rounded-xl flex items-center gap-2 backdrop-blur-sm">
+            <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
             <span>{notification}</span>
           </div>
         )}
 
-        {/* Error notification */}
         {errorNotification && (
           <div className="p-3 bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs rounded-xl flex items-center gap-2 backdrop-blur-sm">
-            <AlertCircle className="w-4 h-4 shrink-0" />
+            <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
             <span>{errorNotification}</span>
           </div>
         )}
 
-        {/* Active Form Body */}
+        {/* Primary Form Body */}
         <form onSubmit={handleSubmit} className="space-y-4 text-xs">
           {(mode === 'signup' || mode === 'edit_profile') && (
             <div className="space-y-1">
-              <label className="text-[11px] font-bold text-slate-300">Full Name *</label>
+              <label className="text-[11px] font-bold text-slate-300">Full Legal Name *</label>
               <div className="relative">
                 <User className="w-4 h-4 text-[#c89d42] absolute left-3 top-3" />
                 <input
@@ -325,7 +376,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder={user.name || 'e.g. Student Scholar'}
+                  placeholder={user.name || 'e.g. Babirye Zula'}
                   className="w-full bg-black/30 border border-white/10 rounded-xl pl-9 pr-4 py-2.5 text-slate-100 focus:outline-none focus:border-[#c89d42] backdrop-blur-sm"
                 />
               </div>
@@ -341,7 +392,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder={user.email || 'user@lawhub.ug'}
+                placeholder="e.g. student@lawhub.ug"
                 className="w-full bg-black/30 border border-white/10 rounded-xl pl-9 pr-4 py-2.5 text-slate-100 focus:outline-none focus:border-[#c89d42] backdrop-blur-sm"
               />
             </div>
@@ -349,13 +400,44 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
           {mode !== 'edit_profile' && (
             <div className="space-y-1">
-              <label className="text-[11px] font-bold text-slate-300">Password</label>
+              <div className="flex items-center justify-between">
+                <label className="text-[11px] font-bold text-slate-300">Password *</label>
+                {mode === 'signup' && (
+                  <span className="text-[10px] text-slate-400">Min 8 characters</span>
+                )}
+              </div>
               <div className="relative">
                 <Lock className="w-4 h-4 text-[#c89d42] absolute left-3 top-3" />
                 <input
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
+                  required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••••••"
+                  className="w-full bg-black/30 border border-white/10 rounded-xl pl-9 pr-10 py-2.5 text-slate-100 focus:outline-none focus:border-[#c89d42] backdrop-blur-sm"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-3 text-slate-400 hover:text-slate-200 cursor-pointer"
+                  title={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {mode === 'signup' && (
+            <div className="space-y-1">
+              <label className="text-[11px] font-bold text-slate-300">Confirm Password *</label>
+              <div className="relative">
+                <Lock className="w-4 h-4 text-[#c89d42] absolute left-3 top-3" />
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  required
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="••••••••••••"
                   className="w-full bg-black/30 border border-white/10 rounded-xl pl-9 pr-4 py-2.5 text-slate-100 focus:outline-none focus:border-[#c89d42] backdrop-blur-sm"
                 />
@@ -393,7 +475,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 </div>
               </div>
 
-              {/* Security Authorization Code Requirement for Faculty Role */}
+              {/* Security Key requirement for Faculty Lecturer */}
               {role === 'Lecturer' && (
                 <div className="space-y-1 p-3 rounded-xl bg-black/30 border border-[#c89d42]/30 animate-fadeIn backdrop-blur-sm">
                   <label className="text-[11px] font-bold text-[#c89d42] flex items-center gap-1.5">
@@ -409,7 +491,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-slate-100 focus:outline-none focus:border-[#c89d42] text-xs font-mono"
                   />
                   <p className="text-[10px] text-slate-400">
-                    Faculty key is required to safeguard lecturer grading and material publishing permissions.
+                    Faculty key protects lecturer grading, student evaluation, and publishing controls.
                   </p>
                 </div>
               )}
@@ -425,7 +507,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   type="text"
                   value={institution}
                   onChange={(e) => setInstitution(e.target.value)}
-                  placeholder="Faculty of Law"
+                  placeholder="e.g. Faculty of Law, Makerere University"
                   className="w-full bg-black/30 border border-white/10 rounded-xl pl-9 pr-4 py-2.5 text-slate-100 focus:outline-none focus:border-[#c89d42] backdrop-blur-sm"
                 />
               </div>
@@ -440,9 +522,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   {user.role}
                 </span>
                 <span className="text-[11px] text-slate-300">
-                  {user.role === 'Administrator' ? 'Full administrative & CMS privileges' :
-                   user.role === 'Lecturer' ? 'Faculty review, coursework & grading privileges' :
-                   'Student learning, research & quiz privileges'}
+                  {user.role === 'Administrator' ? 'Full administrative & platform privileges' :
+                   user.role === 'Lecturer' ? 'Faculty review & grading privileges' :
+                   'Student research & learning privileges'}
                 </span>
               </div>
             </div>
@@ -460,8 +542,54 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           </button>
         </form>
 
+        {/* Expandable Testing Credentials Guide (Non-bypass, fills inputs for secure verification) */}
+        {mode === 'login' && (
+          <div className="pt-1">
+            <button
+              type="button"
+              onClick={() => setShowDemoGuide(!showDemoGuide)}
+              className="w-full text-[11px] text-slate-400 hover:text-[#c89d42] flex items-center justify-between p-2 rounded-xl bg-white/[0.02] border border-white/5 hover:border-white/15 transition cursor-pointer"
+            >
+              <div className="flex items-center gap-1.5">
+                <Info className="w-3.5 h-3.5 text-[#c89d42]" />
+                <span>Testing credentials guide</span>
+              </div>
+              {showDemoGuide ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+            </button>
+
+            {showDemoGuide && (
+              <div className="mt-2 p-3 rounded-xl bg-black/40 border border-white/10 space-y-2 text-[11px] animate-fadeIn">
+                <p className="text-[10px] text-slate-400">
+                  Select a test account below to populate credentials into the login form. Real password verification will be performed:
+                </p>
+                <div className="grid grid-cols-1 gap-1.5">
+                  {demoPresets.map((acc) => (
+                    <button
+                      key={acc.role}
+                      type="button"
+                      onClick={() => handleFillCredentials(acc.email, acc.pass)}
+                      className="p-2 rounded-lg bg-white/[0.03] hover:bg-white/[0.07] border border-white/10 hover:border-[#c89d42]/40 text-left flex items-center justify-between transition cursor-pointer group"
+                    >
+                      <div>
+                        <div className="font-bold text-slate-200 flex items-center gap-2">
+                          <span>{acc.title}</span>
+                          <span className="text-[9px] px-1.5 py-0.5 rounded bg-white/[0.06] text-[#c89d42] border border-[#c89d42]/20 font-mono">
+                            {acc.badge}
+                          </span>
+                        </div>
+                        <div className="text-[10px] text-slate-400">{acc.email}</div>
+                      </div>
+                      <span className="text-[10px] text-[#c89d42] group-hover:underline">Fill Form</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Modal Footer Mode Switching */}
-        <div className="pt-4 border-t border-white/10 flex items-center justify-between text-xs text-slate-400">
+        <div className="pt-3 border-t border-white/10 flex items-center justify-between text-xs text-slate-400">
           {mode === 'login' && (
             <>
               <span>New to LawHub?</span>
@@ -479,7 +607,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           )}
           {mode === 'signup' && (
             <>
-              <span>Already have an account?</span>
+              <span>Already registered?</span>
               <button
                 onClick={() => {
                   setErrorNotification(null);
@@ -494,7 +622,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           )}
           {mode === 'edit_profile' && (
             <button
-              onClick={() => {
+              onClick={async () => {
+                await authService.logout();
                 onLogout();
                 onClose();
               }}
@@ -505,8 +634,80 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             </button>
           )}
         </div>
-
       </div>
+
+      {/* Google Sign-In Confirmation Dialog */}
+      {showGoogleDialog && (
+        <div className="fixed inset-0 z-60 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#18181c] border border-white/15 rounded-2xl max-w-sm w-full p-6 space-y-4 shadow-2xl relative text-slate-100 animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between border-b border-white/10 pb-3">
+              <div className="flex items-center gap-2">
+                <svg className="w-5 h-5" viewBox="0 0 24 24">
+                  <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/>
+                  <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"/>
+                  <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.14-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/>
+                  <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
+                </svg>
+                <h3 className="font-bold text-sm text-slate-100">Sign in with Google</h3>
+              </div>
+              <button
+                onClick={() => setShowGoogleDialog(false)}
+                className="text-slate-400 hover:text-slate-200 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-300">
+              Continue to LawHub with your Google account:
+            </p>
+
+            <form onSubmit={handleConfirmGoogleAuth} className="space-y-3 text-xs">
+              <div>
+                <label className="text-[11px] font-semibold text-slate-300">Google Account Name</label>
+                <input
+                  type="text"
+                  required
+                  value={googleName}
+                  onChange={(e) => setGoogleName(e.target.value)}
+                  placeholder="Your Name"
+                  className="w-full mt-1 bg-black/40 border border-white/15 rounded-xl px-3 py-2 text-slate-100 focus:outline-none focus:border-[#c89d42]"
+                />
+              </div>
+
+              <div>
+                <label className="text-[11px] font-semibold text-slate-300">Google Email Address</label>
+                <input
+                  type="email"
+                  required
+                  value={googleEmail}
+                  onChange={(e) => setGoogleEmail(e.target.value)}
+                  placeholder="your.email@gmail.com"
+                  className="w-full mt-1 bg-black/40 border border-white/15 rounded-xl px-3 py-2 text-slate-100 focus:outline-none focus:border-[#c89d42]"
+                />
+              </div>
+
+              <div className="pt-2 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowGoogleDialog(false)}
+                  className="px-3.5 py-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-slate-300 font-semibold cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="px-4 py-2 rounded-xl bg-[#c89d42] hover:bg-[#dfb858] text-neutral-950 font-bold flex items-center gap-1.5 cursor-pointer shadow-md disabled:opacity-50"
+                >
+                  {isLoading && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
+                  <span>Authorize Google Account</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

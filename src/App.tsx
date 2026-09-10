@@ -25,6 +25,7 @@ import { WatermarkSelectorModal } from './components/WatermarkSelectorModal';
 
 import { UserRole, UserProfile, Course, SavedNote } from './types';
 import { lawCoursesCatalog, initialNotesList } from './data/mockData';
+import { authService } from './services/authService';
 
 export function App() {
   // Persistent User Profile State with real role preservation
@@ -175,46 +176,10 @@ export function App() {
   const [courses] = useState<Course[]>(lawCoursesCatalog);
   const [notes, setNotes] = useState<SavedNote[]>(initialNotesList);
 
-  const handleRoleChange = async (newRole: UserRole) => {
-    const defaultName =
-      newRole === 'Lecturer'
-        ? 'Dr. Apollo Mukasa'
-        : newRole === 'Administrator'
-        ? 'Chief Legal Administrator'
-        : 'Student Scholar';
-
-    const defaultEmail =
-      newRole === 'Lecturer'
-        ? 'apollo.mukasa@lawhub.ug'
-        : newRole === 'Administrator'
-        ? 'admin@lawhub.ug'
-        : 'student@lawhub.ug';
-
-    const defaultInstitution =
-      newRole === 'Lecturer'
-        ? 'Faculty of Law'
-        : newRole === 'Administrator'
-        ? 'LawHub Academic Directorate'
-        : 'Faculty of Law';
-
-    const updatedUser: UserProfile = {
-      ...user,
-      role: newRole,
-      name: defaultName,
-      email: defaultEmail,
-      institution: defaultInstitution
-    };
-
-    setUser(updatedUser);
-    localStorage.setItem('lawhub_student_profile', JSON.stringify(updatedUser));
-
-    // Contextual auto-navigation to role dashboard
-    if (newRole === 'Administrator') {
-      setActiveTab('admin');
-    } else if (newRole === 'Lecturer') {
-      setActiveTab('lecturer-dashboard');
-    } else {
-      setActiveTab('dashboard');
+  const handleRoleChange = async (targetRole: UserRole) => {
+    // Security abstraction: changing accounts/roles requires legitimate credential authentication
+    if (user.role !== targetRole) {
+      handleOpenAuth('login');
     }
   };
 
@@ -298,18 +263,19 @@ export function App() {
     });
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await authService.logout();
     const guestUser: UserProfile = {
       id: 'usr_guest',
-      name: 'Student Scholar',
-      email: 'student@lawhub.ug',
+      name: 'Guest Scholar',
+      email: '',
       role: 'Student',
       institution: 'Faculty of Law',
       studyStreakDays: 1,
       completedQuizzes: 0,
       savedNotesCount: 0,
       bookmarkedCasesCount: 0,
-      joinedDate: 'Guest Mode'
+      joinedDate: 'Guest Session'
     };
     setUser(guestUser);
     localStorage.setItem('lawhub_student_profile', JSON.stringify(guestUser));
@@ -332,6 +298,8 @@ export function App() {
         onEnter={handleEnterPlatform}
         onLogin={handleLogin}
         onSignUp={handleSignUp}
+        onOpenAuth={handleOpenAuth}
+        user={user}
         onNavigate={(tab) => {
           // Safeguard protected tabs
           if (tab === 'admin' && user.role !== 'Administrator') {
@@ -363,7 +331,6 @@ export function App() {
       <Navbar
         user={user}
         userRole={user.role}
-        onRoleChange={handleRoleChange}
         activeTab={activeTab}
         onSelectTab={setActiveTab}
         onOpenSearch={() => setIsSearchOpen(true)}

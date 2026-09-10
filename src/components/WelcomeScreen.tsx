@@ -19,12 +19,14 @@ interface WelcomeScreenProps {
   onNavigate?: (tab: string) => void;
   onLogin?: (email: string, name?: string, role?: UserRole) => void;
   onSignUp?: (data: { name: string; email: string; institution: string; role: UserRole }) => void;
+  onOpenAuth?: (mode?: 'login' | 'signup') => void;
   user?: { name: string; email: string; role: UserRole };
 }
 
 export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   onEnter,
   onLogin,
+  onOpenAuth,
   user
 }) => {
   const [progress, setProgress] = useState(0);
@@ -122,13 +124,19 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
           </div>
         </div>
 
-        {/* Quick Role Switcher Toggle */}
+        {/* Authentication & Sign-in Trigger */}
         <button
-          onClick={() => setShowQuickAuth(!showQuickAuth)}
+          onClick={() => {
+            if (onOpenAuth) {
+              onOpenAuth('login');
+            } else {
+              setShowQuickAuth(!showQuickAuth);
+            }
+          }}
           className="px-3.5 py-1.5 rounded-xl bg-black/40 hover:bg-black/60 border border-white/10 hover:border-[#c89d42]/40 text-xs font-semibold text-slate-300 hover:text-[#c89d42] transition backdrop-blur-md cursor-pointer flex items-center gap-1.5"
         >
           <KeyRound className="w-3.5 h-3.5 text-[#c89d42]" />
-          <span>{showQuickAuth ? 'Back to Welcome' : 'Switch Account'}</span>
+          <span>Sign In / Switch Account</span>
         </button>
       </header>
 
@@ -190,53 +198,48 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
             )}
           </div>
         ) : (
-          /* Quick Role Selection Panel */
+          /* Secure Account Selection Panel */
           <div className="bg-black/50 border border-white/10 rounded-3xl p-6 sm:p-8 space-y-4 shadow-2xl backdrop-blur-2xl text-left animate-in fade-in zoom-in-95 duration-300">
             <div className="text-center space-y-1">
-              <h2 className="font-heading font-extrabold text-xl text-slate-100">Select Verified Role</h2>
-              <p className="text-xs text-slate-400">Choose your academic profile to enter your dedicated dashboard.</p>
+              <div className="w-10 h-10 rounded-xl bg-white/[0.05] border border-white/10 text-[#c89d42] flex items-center justify-center mx-auto mb-2">
+                <ShieldCheck className="w-5 h-5" />
+              </div>
+              <h2 className="font-heading font-extrabold text-xl text-slate-100">Verified Authentication</h2>
+              <p className="text-xs text-slate-400">
+                To safeguard student records and academic coursework, role access requires verified password authentication or Google Sign-In.
+              </p>
             </div>
 
             <div className="space-y-2 pt-2">
-              {presetRoles.map((acc) => {
-                const Icon = acc.icon;
-                return (
-                  <button
-                    key={acc.role}
-                    type="button"
-                    onClick={async () => {
-                      if (onLogin) {
-                        onLogin(acc.email, acc.title, acc.role);
-                      }
-                      onEnter();
-                    }}
-                    className="w-full p-3 rounded-2xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.07] hover:border-[#c89d42]/50 text-left flex items-center justify-between transition group cursor-pointer"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-xl bg-white/[0.05] border border-white/10 text-[#c89d42] flex items-center justify-center shrink-0">
-                        <Icon className="w-4 h-4" />
-                      </div>
-                      <div>
-                        <div className="font-bold text-xs flex items-center gap-2 text-slate-100">
-                          <span>{acc.title}</span>
-                          <span className="text-[9px] px-2 py-0.5 rounded bg-white/[0.06] text-[#c89d42] border border-[#c89d42]/30 font-mono font-bold">
-                            {acc.role}
-                          </span>
-                        </div>
-                        <div className="text-[10px] text-slate-400">{acc.desc}</div>
-                      </div>
-                    </div>
-                    <ArrowRight className="w-4 h-4 shrink-0 text-[#c89d42] group-hover:translate-x-1 transition-transform" />
-                  </button>
-                );
-              })}
+              <button
+                type="button"
+                onClick={() => {
+                  setShowQuickAuth(false);
+                  if (onOpenAuth) onOpenAuth('login');
+                }}
+                className="w-full py-3 px-4 rounded-xl bg-[#c89d42] hover:bg-[#dfb858] text-neutral-950 font-bold text-xs transition flex items-center justify-center gap-2 cursor-pointer shadow-md"
+              >
+                <KeyRound className="w-4 h-4" />
+                <span>Sign In to Account</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setShowQuickAuth(false);
+                  if (onOpenAuth) onOpenAuth('signup');
+                }}
+                className="w-full py-2.5 px-4 rounded-xl border border-white/15 bg-white/[0.04] hover:bg-white/[0.08] text-slate-200 font-semibold text-xs transition text-center cursor-pointer"
+              >
+                Create New Student Account
+              </button>
             </div>
 
             <button
               onClick={() => setShowQuickAuth(false)}
-              className="w-full py-2.5 rounded-xl border border-white/10 bg-white/[0.02] hover:bg-white/[0.06] text-xs font-semibold text-slate-300 transition text-center cursor-pointer"
+              className="w-full py-2 rounded-xl text-xs text-slate-400 hover:text-slate-200 transition text-center cursor-pointer"
             >
-              Continue to Dashboard
+              Back to Welcome Screen
             </button>
           </div>
         )}
