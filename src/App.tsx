@@ -341,7 +341,7 @@ export function App() {
       />
 
       {/* Main App Body */}
-      <div className="flex-1 flex max-w-[1600px] w-full mx-auto">
+      <div className="flex-1 flex max-w-[1720px] w-full mx-auto">
         
         {/* Sidebar Navigation */}
         <Sidebar
