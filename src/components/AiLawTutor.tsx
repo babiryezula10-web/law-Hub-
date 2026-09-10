@@ -93,10 +93,14 @@ export const AiLawTutor: React.FC<AiLawTutorProps> = ({
       setMessages((prev) => [...prev, aiMsg]);
     } catch (err: any) {
       console.error(err);
+      let errorText = `⚠️ **Notice**: ${err?.message || 'Unable to connect to LawHub Academic Assistant service.'}`;
+      if (err?.message === 'Failed to fetch' || err?.name === 'TypeError') {
+        errorText = `⚠️ **Connection Error**: Unable to connect to the LawHub backend server. Please verify the local server is running (\`npm run dev\` on port 3000) and try again.`;
+      }
       const errorMsg: ChatMessage = {
         id: `err_${Date.now()}`,
         sender: 'ai',
-        text: `⚠️ **Notice**: ${err?.message || 'Unable to connect to LawHub Academic Assistant service.'}`,
+        text: errorText,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
       setMessages((prev) => [...prev, errorMsg]);

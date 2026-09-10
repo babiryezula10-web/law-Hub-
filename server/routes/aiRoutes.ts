@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { GoogleGenAI } from '@google/genai';
 import { CONFIG } from '../config';
+import { generateOfflineLegalResponse, buildGroundingContext } from '../services/legalKnowledgeService';
 
 export const aiRouter = Router();
 
@@ -30,8 +31,8 @@ async function generateContentWithFallback(
     retriesPerModel?: number;
   }
 ) {
-  const primaryModel = params.primaryModel || 'gemini-3.6-flash';
-  const fallbackModels = ['gemini-flash-latest', 'gemini-3.1-flash-lite'];
+  const primaryModel = params.primaryModel || 'gemini-2.5-flash';
+  const fallbackModels = ['gemini-2.0-flash', 'gemini-1.5-flash'];
   const modelsToTry = [primaryModel, ...fallbackModels.filter((m) => m !== primaryModel)];
 
   let lastError: any = null;
@@ -62,6 +63,10 @@ async function generateContentWithFallback(
   }
 
   throw lastError || new Error('The AI service is experiencing high demand. Please try again in a few moments.');
+}
+
+function isGreeting(question: string): boolean {
+  return /^(hello|hi|hey|greetings|good morning|good afternoon|good evening|good day|salutations)[\s!.?]*$/i.test(question.trim());
 }
 
 function isLikelyNonLegalQuery(question: string): boolean {
@@ -108,6 +113,13 @@ aiRouter.post('/tutor', async (req: Request, res: Response) => {
 
     const trimmedPrompt = prompt.trim();
 
+    // Friendly greeting handler
+    if (isGreeting(trimmedPrompt)) {
+      return res.json({
+        reply: `Good day! I am the LawHub AI Legal Tutor, your specialized research and academic assistant for Ugandan jurisprudence.\n\nI am configured with knowledge of the 1995 Constitution of Uganda, Acts of Parliament, landmark High Court, Court of Appeal, and Supreme Court judgments, and LLB / Bar Course curricula.\n\nHow may I assist your legal study today?\n• Statutory interpretation (e.g. S.10 Contracts Act 2010, S.39 Land Act)\n• Landmark case law ratios (e.g. Grace Ibingira, Tinyefuza, Obbo & Mwenda)\n• Structured IRAC legal answers (Issue, Rule, Application, Conclusion)\n• Legal drafting principles and civil/criminal procedure`
+      });
+    }
+
     if (isLikelyNonLegalQuery(trimmedPrompt)) {
       return res.json({
         reply: `I am LawHub AI Legal Tutor, designed specifically to assist with legal and law-related questions only. I cannot assist with non-legal topics.
@@ -123,43 +135,35 @@ Please feel free to ask any question regarding:
 
     const ai = getGeminiClient();
     if (!ai) {
-      return res.json({
-        reply: `**LawHub Legal Tutor Demonstration Response** (Live Gemini API key not configured):
-
-Regarding your query: "${trimmedPrompt}"
-
-1. **Legal Principle & Definition**:
-In Ugandan jurisprudence and common law traditions, this area is governed by constitutional supremacy and statutory interpretation principles.
-
-2. **Statutory Provisions**:
-• Constitution of the Republic of Uganda, 1995 (as amended)
-• Relevant Acts of Parliament (e.g., Contracts Act 2010, Land Act Cap 227)
-
-3. **Judicial Precedents**:
-Courts emphasize adherence to binding Supreme Court precedent pursuant to Article 132(4) of the Constitution.
-
-*(To activate full real-time AI responses, configure GEMINI_API_KEY in your environment variables.)*`
-      });
+      const offlineReply = generateOfflineLegalResponse(trimmedPrompt, courseContext);
+      return res.json({ reply: offlineReply });
     }
 
+    const groundingContext = buildGroundingContext(trimmedPrompt);
     const systemInstruction = `You are "LawHub AI Legal Tutor", an authoritative Ugandan Legal Research & Academic Assistant (expert in the 1995 Constitution of Uganda, Ugandan statutes, Supreme Court, Court of Appeal, High Court jurisprudence, common law, and LLB curricula).
 Respond strictly to law-related questions only. Provide structured answers:
 1. Legal Principle & Definition
 2. Statutory Provisions & Sections
 3. Relevant Case Law & Judicial Precedents
 4. Practical Example / IRAC Application
-5. Conclusion`;
+5. Conclusion
+${groundingContext ? `\nVERIFIED UGANDAN AUTHORITIES FROM LAWHUB REPOSITORY:\n${groundingContext}\n` : ''}`;
 
-    const response = await generateContentWithFallback(ai, {
-      primaryModel: 'gemini-3.6-flash',
-      contents: trimmedPrompt,
-      config: {
-        systemInstruction,
-        temperature: 0.4
-      }
-    });
+    try {
+      const response = await generateContentWithFallback(ai, {
+        primaryModel: 'gemini-2.5-flash',
+        contents: trimmedPrompt,
+        config: {
+          systemInstruction,
+          temperature: 0.4
+        }
+      });
 
-    return res.json({ reply: response.text || 'Unable to generate response.' });
+      return res.json({ reply: response.text || generateOfflineLegalResponse(trimmedPrompt, courseContext) });
+    } catch (modelErr: any) {
+      console.warn('[AI Tutor] Gemini call failed, serving offline legal knowledge:', modelErr?.message || modelErr);
+      return res.json({ reply: generateOfflineLegalResponse(trimmedPrompt, courseContext) });
+    }
   } catch (error: any) {
     console.error('[AI Tutor] Error:', error);
     return res.status(500).json({
@@ -216,7 +220,7 @@ ALWAYS include:
     const prompt = `Draft a formal ${documentType}.\nDetails: ${details || 'Standard format'}\nParties: ${partyNames || 'To be filled'}\nSpecific Statutory References: ${statutoryRef || 'Ugandan Law'}`;
 
     const response = await generateContentWithFallback(ai, {
-      primaryModel: 'gemini-3.6-flash',
+      primaryModel: 'gemini-2.5-flash',
       contents: prompt,
       config: {
         systemInstruction,
@@ -274,7 +278,7 @@ Return JSON response matching:
 ]`;
 
     const response = await generateContentWithFallback(ai, {
-      primaryModel: 'gemini-3.6-flash',
+      primaryModel: 'gemini-2.5-flash',
       contents: prompt,
       config: {
         responseMimeType: 'application/json',
